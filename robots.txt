@@ -2,6 +2,7 @@ User-agent: *
 Allow: /
 
 Disallow: /assets/mail.php
-Disallow: /scratch/
+Disallow: /admin/
+Disallow: /storage/
 
-Sitemap: https://www.pranuuxui.com/sitemap.xml
+Sitemap: https://www.pranuuxui.com/sitemap.php

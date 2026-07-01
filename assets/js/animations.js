@@ -14,7 +14,7 @@
 
     var ctx = canvas.getContext('2d');
     var W, H, particles = [];
-    var isDark = document.body.classList.contains('dark-mode') ||
+    var isDark = document.body.classList.contains('dark-theme') ||
                  document.documentElement.getAttribute('data-theme') === 'dark';
 
     function resize() {
@@ -192,32 +192,52 @@
 
       var data = new FormData(form);
       fetch(form.action, { method: 'POST', body: data })
-        .then(function (res) { return res.text(); })
-        .then(function () {
-          showFormSuccess(form);
+        .then(function (res) { return res.json(); })
+        .then(function (payload) {
+          if (payload && payload.success) {
+            showFormSuccess(form, payload.success);
+          } else {
+            var msg = (payload && payload.error) ? payload.error : 'Sorry, something went wrong. Please try again.';
+            showFormError(form, msg);
+          }
         })
-        .catch(function () {
-          // Still show success UI for demo (local can't send mail without SMTP)
-          showFormSuccess(form);
+        .catch(function (err) {
+          console.error('Contact submit failed:', err);
+          showFormError(form, 'Network error. Please try again in a moment.');
         });
     });
   }
 
-  function showFormSuccess(form) {
-    form.style.display = 'none';
-    var successDiv = document.querySelector('.form-success-overlay');
-    if (successDiv) {
-      successDiv.classList.add('show');
+  function showFormSuccess(form, message) {
+    if (window.UXLightbox && typeof window.UXLightbox.show === 'function') {
+      window.UXLightbox.show({
+        title: 'Successfully sent',
+        message: message || "Thanks — I’ll get back to you ASAP.",
+        variant: 'success'
+      });
+    }
+    form.reset();
+    var btn = form.querySelector('.submit-btn');
+    if (btn) {
+      btn.textContent = 'Send Message';
+      btn.disabled = false;
+    }
+  }
+
+  function showFormError(form, message) {
+    if (window.UXLightbox && typeof window.UXLightbox.show === 'function') {
+      window.UXLightbox.show({
+        title: 'Could not send',
+        message: message || 'Please try again.',
+        variant: 'error'
+      });
     } else {
-      var div = document.createElement('div');
-      div.className = 'form-success-overlay show';
-      div.innerHTML =
-        '<div class="success-icon">' +
-        '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>' +
-        '</div>' +
-        '<h4 style="font-weight:700;font-size:1.2rem;margin:0">Message Sent! 🎉</h4>' +
-        '<p style="opacity:0.6;margin:0;font-size:0.9rem">I\'ll get back to you within 24 hours.</p>';
-      form.parentNode.insertBefore(div, form.nextSibling);
+      alert(message || 'Please try again.');
+    }
+    var btn = form.querySelector('.submit-btn');
+    if (btn) {
+      btn.textContent = 'Send Message';
+      btn.disabled = false;
     }
   }
 
@@ -240,10 +260,28 @@
 
   /* ── 8. ACTIVE NAV HIGHLIGHT ─────────────────────────────── */
   function initActiveNav() {
-    var page = window.location.pathname.split('/').pop().replace('.php', '').replace('.html', '') || 'index';
+    var path = (window.location.pathname || '/').replace(/\/+$/, '');
+    var parts = path.split('/').filter(Boolean); // ["admin","dashboard"] etc.
+    var page = (parts[parts.length - 1] || 'index').replace('.php', '').replace('.html', '');
+    var section = parts[0] || 'index';
+
     document.querySelectorAll('.nav-link').forEach(function (a) {
-      var href = (a.getAttribute('href') || '').replace('.php', '').replace('.html', '');
-      if (href === page || (page === '' && href === 'index') || (page === 'skills' && href === 'skills')) {
+      var rawHref = (a.getAttribute('href') || '').replace(/\/+$/, '');
+      var href = rawHref.replace('.php', '').replace('.html', '');
+
+      // Clean home handling
+      if ((page === '' || page === 'index') && href === 'index') {
+        a.classList.add('active');
+        return;
+      }
+
+      // Admin section should keep Admin highlighted for any /admin/*
+      if (section === 'admin' && (href === 'admin' || href.indexOf('admin/') === 0)) {
+        a.classList.add('active');
+        return;
+      }
+
+      if (href === page) {
         a.classList.add('active');
       }
     });
@@ -270,7 +308,6 @@
     });
   }
 
-  }
 
   /* ── PORTFOLIO FILTER ────────────────────────────────────── */
   function initPortfolioFilter() {
@@ -326,7 +363,8 @@
 
     // Expose for inline use
     window.PraveenAnimations = {
-      showFormSuccess: showFormSuccess
+      showFormSuccess: showFormSuccess,
+      showFormError: showFormError
     };
   });
 

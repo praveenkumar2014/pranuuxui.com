@@ -32,6 +32,7 @@ $pages = [
     'admin.php'             => 'admin.html',
     'terms.php'             => 'terms.html',
     'privacy.php'           => 'privacy.html',
+    'careers.php'           => 'careers.html',
 ];
 
 $built  = 0;

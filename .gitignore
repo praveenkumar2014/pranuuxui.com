@@ -7,3 +7,7 @@ test-results/
 .DS_Store
 *.log
 npm-debug.log*
+storage/
+admin_info.md
+.env
+.env.local

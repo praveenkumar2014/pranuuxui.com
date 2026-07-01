@@ -14,12 +14,9 @@
                   </div>
                   <div class="text">
                     <h3 class="card-title">Praveen Kumar K 👋</h3>
-                    <p>A Passionate <span>Full Stack Developer</span> 🖥️ & <span>Product Designer</span> having
-                      <span>16
-                        years</span> of Experiences over 24+
-                      Country Worldwide.</p>
+                    <p>Senior UX/UI Architect &amp; <span class="ai-badge">✦ AI Agentic</span> Design Strategist with <strong>18+ years</strong> of experience across <strong>14+ countries</strong>.</p>
                     <div class="common-button-groups">
-                      <a class="btn btn-call" href="#">
+                      <a class="btn btn-call" href="contact">
                         <svg class="icon" width="25" height="24" viewBox="0 0 25 24" fill="none"
                           xmlns="http://www.w3.org/2000/svg">
                           <path

@@ -1,75 +1,177 @@
 <?php
-  // ── PHP Active Navigation Detection ──────────────────────
-  $current_page = basename($_SERVER['PHP_SELF']);
-  if (!function_exists('nav_active')) {
-    function nav_active($page) {
-      global $current_page;
-      return ($current_page === $page) ? ' active' : '';
+require_once __DIR__ . '/includes/config.php';
+
+// ── PHP Active Navigation Detection ──────────────────────
+$current_page = basename($_SERVER['PHP_SELF'] ?? '');
+$current_path = trim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/', '/');
+if (!function_exists('nav_active')) {
+  function nav_active(string $url): string
+  {
+    global $current_page, $current_path;
+
+    $url = trim($url, '/'); // e.g. "skills" or "admin/dashboard"
+    $path = $current_path;  // e.g. "" | "skills" | "admin/dashboard"
+
+    // Home
+    if ($url === 'index') {
+      return ($path === '' || $path === 'index' || $current_page === 'index.php') ? ' active' : '';
     }
+
+    // Exact match on clean path or PHP basename (for direct .php access)
+    if ($path === $url || $current_page === ($url . '.php')) {
+      return ' active';
+    }
+
+    // Admin section: /admin/* should keep Admin highlighted
+    if ($url === 'admin' && ($path === 'admin' || str_starts_with($path, 'admin/'))) {
+      return ' active';
+    }
+
+    return '';
   }
+}
+
+// ── Session & RBAC ───────────────────────────────────────
+if (session_status() === PHP_SESSION_NONE) session_start();
+$user_role = $_SESSION['admin_role'] ?? 'guest';
+
+// ── SEO Logic ───────────────────────────────────────────
+$page_titles = [
+  'index.php' => 'Praveen Kumar K — Senior UX/UI Architect · AI Agentic Design Expert',
+  'portfolio.php' => 'Projects — Praveen Kumar K | AI UX Architecture',
+  'services.php' => 'Services — UX Strategy & Generative AI Design',
+  'skills.php' => 'Skills — UX, AI & LLM Design Stack',
+  'blog.php' => 'Blog — UX Research, AI Agents & Product Design',
+  'contact.php' => 'Contact — Let\'s Build the Future of AI UX',
+  'careers.php' => 'Careers — AI-Assisted Job Search & Senior UX Roles',
+  'about.php' => 'About — Praveen Kumar K | 18+ Years UX Leadership',
+];
+$current_title = $page_titles[$current_page] ?? 'Praveen Kumar K — Senior UX/UI Architect';
+$canonical_path = $current_path === '' ? '' : $current_path;
+$canonical_url = site_base_url() . ($canonical_path ? '/' . $canonical_path : '/');
+$ga_id = ga_measurement_id();
+
+// ── Dynamic Menu Items ──────────────────────────────────
+$main_menu = [
+  ['title' => 'Home', 'url' => 'index', 'icon' => 'home', 'roles' => ['guest', 'admin', 'super_admin']],
+  ['title' => 'About', 'url' => 'about', 'icon' => 'user', 'roles' => ['guest', 'admin', 'super_admin']],
+  ['title' => 'Expert', 'url' => 'services', 'icon' => 'expert', 'roles' => ['guest', 'admin', 'super_admin']],
+  ['title' => 'Skills', 'url' => 'skills', 'icon' => 'skills', 'roles' => ['guest', 'admin', 'super_admin']],
+  ['title' => 'Works', 'url' => 'portfolio', 'icon' => 'works', 'roles' => ['guest', 'admin', 'super_admin']],
+  ['title' => 'Blog', 'url' => 'blog', 'icon' => 'blog', 'roles' => ['guest', 'admin', 'super_admin']],
+  ['title' => 'Careers', 'url' => 'careers', 'icon' => 'expert', 'roles' => ['guest', 'admin', 'super_admin']],
+  ['title' => 'Contact', 'url' => 'contact', 'icon' => 'contact', 'roles' => ['guest', 'admin', 'super_admin']],
+  ['title' => 'Admin', 'url' => 'admin', 'icon' => 'lock', 'roles' => ['admin', 'super_admin']],
+  ['title' => 'Login', 'url' => 'login', 'icon' => 'lock', 'roles' => ['guest']],
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
 
-
-<!-- Mirrored from www.pranuuxui.com.com/tf/html/PraveenUXU-html/index by HTTrack Website Copier/3.x [XR&CO'2014], Tue, 25 Mar 2025 07:37:35 GMT -->
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Praveen Kumar K — Senior UX/UI Architect · AI Agentic & Generative Design Expert</title>
+  <title><?php echo $current_title; ?></title>
   <meta name="description" content="Praveen Kumar K — 18+ years of UX/UI Architecture, AI Agentic Design, Generative AI UX Strategy, Human-Computer Interaction and Product Design across 14+ countries worldwide.">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="Praveen Kumar K — Senior UX/UI Architect · AI Agentic Design Expert">
   <meta property="og:description" content="18+ years of UX/UI Architecture, AI Agentic Design, Generative AI UX Strategy across 14+ countries worldwide.">
-  <meta property="og:image" content="assets/img/images/profile.png">
-  <meta property="og:url" content="https://www.pranuuxui.com/">
+  <meta property="og:image" content="/assets/img/images/profile.png">
+  <meta property="og:url" content="<?php echo htmlspecialchars($canonical_url, ENT_QUOTES); ?>">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="author" content="Praveen Kumar K">
+  <meta name="keywords" content="UX Designer, UI Architect, AI UX, Generative AI, LLM Product Design, Design Systems, WCAG, Figma, Portfolio">
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Praveen Kumar K — Senior UX/UI Architect">
   <meta name="twitter:description" content="18+ years of UX/UI, AI Agentic Design &amp; Generative AI UX Strategy across 14+ countries.">
-  <meta name="twitter:image" content="assets/img/images/profile.png">
+  <meta name="twitter:image" content="/assets/img/images/profile.png">
   <!-- Canonical -->
-  <link rel="canonical" href="https://www.pranuuxui.com/">
-
-  <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon.svg">
+  <link rel="canonical" href="<?php echo htmlspecialchars($canonical_url, ENT_QUOTES); ?>">
+  <?php if ($ga_id && $ga_id !== 'G-XXXXXXXXXX'): ?>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo htmlspecialchars($ga_id, ENT_QUOTES); ?>"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', '<?php echo htmlspecialchars($ga_id, ENT_QUOTES); ?>', { anonymize_ip: true });
+  </script>
+  <?php endif; ?>
+  <link rel="shortcut icon" type="image/x-icon" href="/assets/img/favicon.svg">
   <!-- Place favicon.ico in the root directory -->
 
   <!-- CSS here -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/bootstrap.min.css">
-  <link rel="stylesheet" href="assets/fontawsome/css/all.min.css">
-  <link rel="stylesheet" href="assets/fontawsome/css/fontawesome.min.css">
-  <link rel="stylesheet" href="assets/css/slick.css">
-  <link rel="stylesheet" href="assets/css/magnific-popup.css">
-  <link rel="stylesheet" href="assets/css/style.css">
-  <link rel="stylesheet" href="assets/css/responsive.css">
-  <link rel="stylesheet" href="assets/css/animations.css">
+  <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/assets/fontawsome/css/all.min.css">
+  <link rel="stylesheet" href="/assets/fontawsome/css/fontawesome.min.css">
+  <link rel="stylesheet" href="/assets/css/slick.css">
+  <link rel="stylesheet" href="/assets/css/magnific-popup.css">
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="/assets/css/responsive.css">
+  <link rel="stylesheet" href="/assets/css/animations.css">
+  <link rel="stylesheet" href="/css/glassy.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Person",
-    "name": "Praveen Kumar K",
-    "jobTitle": "Senior UX/UI Architect & AI Agentic Design Strategist",
-    "description": "18+ years of UX/UI Architecture, AI Agentic Design, Generative AI UX Strategy across 14+ countries",
-    "url": "https://www.pranuuxui.com/",
-    "image": "https://www.pranuuxui.com/assets/img/images/profile.png",
-    "email": "praveenkumar.kanneganti@gmail.com",
-    "sameAs": [
-      "https://www.linkedin.com/in/praveenkumarkanneganti/",
-      "https://www.behance.net/praveen-ui-ux",
-      "https://www.facebook.com/pranu21m",
-      "https://www.youtube.com/@praveenk9821"
-    ],
-    "knowsAbout": ["UX Design", "UI Design", "AI Agentic Design", "Product Design", "HCI", "Generative AI", "Behavioural UX"]
-  }
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "Praveen Kumar K",
+      "jobTitle": "Senior UX/UI Architect & AI Agentic Design Strategist",
+      "description": "18+ years of UX/UI Architecture, AI Agentic Design, Generative AI UX Strategy across 14+ countries",
+      "url": "https://www.pranuuxui.com/",
+      "image": "https://www.pranuuxui.com/assets/img/images/profile.png",
+      "email": "praveenkumar.kanneganti@gmail.com",
+      "sameAs": [
+        "https://www.linkedin.com/in/praveenkumarkanneganti/",
+        "https://www.behance.net/praveen-ui-ux",
+        "https://www.facebook.com/pranu21m",
+        "https://www.youtube.com/@praveenk9821"
+      ],
+      "knowsAbout": ["UX Design", "UI Design", "AI Agentic Design", "Product Design", "HCI", "Generative AI", "Behavioural UX"]
+    }
   </script>
+  <!-- Cal.com embed code -->
+  <script src="/js/modern.js"></script>
+  <script type="text/javascript">
+    (function(C, A, L) {
+      let p = function(a, ar) {
+        a.q.push(ar);
+      };
+      let d = C.document;
+      C.Cal = C.Cal || function() {
+        let a = arguments;
+        let l = a.length;
+        for (let i = 0; i < l; i++) {
+          p(C.Cal, a[i]);
+        }
+      };
+      C.Cal.q = C.Cal.q || [];
+      d.head.appendChild(d.createElement("script")).src = A;
+      C.Cal("init", L);
+      C.Cal("ui", {
+        "styles": {
+          "branding": {
+            "brandColor": "#4770FF"
+          }
+        },
+        "hideEventTypeDetails": false,
+        "layout": "month_view"
+      });
+    })(window, "https://app.cal.com/embed/embed.js", "init");
+  </script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </head>
 
-<body>
+<body class="glassy-theme">
+  <div id="background-canvas"></div>
+  <div class="glow-orb" id="orb-1"></div>
+  <div class="glow-orb" id="orb-2" style="background: rgba(168, 85, 247, 0.2); animation-delay: -10s;"></div>
 
   <div id="page-content">
     <!-- header part start -->
@@ -98,96 +200,53 @@
                 </a>
               </div>
               <ul class="navbar-info mx-auto">
-                <li class="nav-item">
-                  <a class="nav-link<?php echo nav_active('index.php'); ?>" aria-current="page" href="index">
-                    <svg class="nav-icon" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path
-                        d="M13.475 4.92481L9.03083 1.46814C8.64082 1.16473 8.1608 1 7.66667 1C7.17254 1 6.69251 1.16473 6.3025 1.46814L1.8575 4.92481C1.59037 5.13254 1.37424 5.39858 1.22563 5.7026C1.07701 6.00662 0.99984 6.34058 1 6.67897V12.679C1 13.121 1.17559 13.5449 1.48816 13.8575C1.80072 14.17 2.22464 14.3456 2.66667 14.3456H12.6667C13.1087 14.3456 13.5326 14.17 13.8452 13.8575C14.1577 13.5449 14.3333 13.121 14.3333 12.679V6.67897C14.3333 5.99314 14.0167 5.34564 13.475 4.92481Z"
-                        stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
-                      <path d="M10.9753 10.1665C9.13359 11.2773 6.14859 11.2773 4.30859 10.1665" stroke-width="1.4"
-                        stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    <span>Home</span>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link<?php echo nav_active('about.php'); ?>" href="about">
-                    <svg class="nav-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path
-                        d="M9 9.8335C9.66304 9.8335 10.2989 9.5701 10.7678 9.10126C11.2366 8.63242 11.5 7.99654 11.5 7.3335C11.5 6.67045 11.2366 6.03457 10.7678 5.56573C10.2989 5.09689 9.66304 4.8335 9 4.8335C8.33696 4.8335 7.70107 5.09689 7.23223 5.56573C6.76339 6.03457 6.5 6.67045 6.5 7.3335C6.5 7.99654 6.76339 8.63242 7.23223 9.10126C7.70107 9.5701 8.33696 9.8335 9 9.8335Z"
-                        stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
-                      <path d="M9 1.5C15 1.5 16.5 3 16.5 9C16.5 15 15 16.5 9 16.5C3 16.5 1.5 15 1.5 9C1.5 3 3 1.5 9 1.5Z"
-                        stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
-                      <path
-                        d="M4 15.7085V15.6668C4 14.7828 4.35119 13.9349 4.97631 13.3098C5.60143 12.6847 6.44928 12.3335 7.33333 12.3335H10.6667C11.5507 12.3335 12.3986 12.6847 13.0237 13.3098C13.6488 13.9349 14 14.7828 14 15.6668V15.7085"
-                        stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    About
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link<?php echo nav_active('services.php'); ?>" href="services">
-                    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M7.99967 1.3335L1.33301 4.66683L7.99967 8.00016L14.6663 4.66683L7.99967 1.3335Z"
-                        stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
-                      <path d="M1.33301 8L7.99967 11.3333L14.6663 8" stroke-width="1.4" stroke-linecap="round"
-                        stroke-linejoin="round" />
-                      <path d="M1.33301 11.3335L7.99967 14.6668L14.6663 11.3335" stroke-width="1.4" stroke-linecap="round"
-                        stroke-linejoin="round" />
-                    </svg>
-                    Expert
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link<?php echo nav_active('skills.php'); ?>" href="skills">
-                    <svg class="nav-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M9 2L11.09 6.26L16 7L12.5 10.41L13.18 15.32L9 13.27L4.82 15.32L5.5 10.41L2 7L6.91 6.26L9 2Z" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Skills
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link<?php echo nav_active('portfolio.php'); ?>" href="portfolio">
-                    <svg class="nav-icon" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path
-                        d="M2.00326 3.99733L7.95159 1.40649C8.04974 1.36442 8.15533 1.34243 8.26212 1.34181C8.3689 1.34119 8.47473 1.36196 8.57337 1.40289C8.67201 1.44382 8.76145 1.50408 8.83642 1.58013C8.9114 1.65617 8.97039 1.74646 9.00992 1.84566L13.1133 11.764C13.1985 11.9651 13.2014 12.1917 13.1213 12.3949C13.0412 12.5982 12.8845 12.7618 12.6849 12.8507L6.73742 15.4415C6.63922 15.4837 6.53356 15.5058 6.42668 15.5065C6.3198 15.5072 6.21387 15.4864 6.11514 15.4455C6.0164 15.4046 5.92688 15.3442 5.85184 15.2681C5.7768 15.192 5.71778 15.1016 5.67826 15.0023L1.57492 5.08316C1.48963 4.88204 1.48673 4.65546 1.56684 4.45222C1.64696 4.24898 1.80367 4.08616 2.00326 3.99733Z"
-                        stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
-                      <path
-                        d="M11.5 1.3335H12.3333C12.5543 1.3335 12.7663 1.42129 12.9226 1.57757C13.0789 1.73385 13.1667 1.94582 13.1667 2.16683V5.0835"
-                        stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
-                      <path
-                        d="M15.6663 3C15.8863 3.09333 16.0997 3.18083 16.3063 3.2625C16.5098 3.34882 16.6706 3.51241 16.7534 3.71729C16.8362 3.92217 16.8343 4.15155 16.748 4.355L14.833 8.83334"
-                        stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    works
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link<?php echo nav_active('blog.php'); ?>" href="blog">
-                    <svg class="nav-icon" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path
-                        d="M12.1663 6.16676L13.4163 4.91676C13.6352 4.69789 13.8088 4.43805 13.9273 4.15208C14.0457 3.86612 14.1067 3.55962 14.1067 3.25009C14.1067 2.94056 14.0457 2.63406 13.9273 2.3481C13.8088 2.06213 13.6352 1.80229 13.4163 1.58342C13.1975 1.36455 12.9376 1.19094 12.6517 1.07248C12.3657 0.954033 12.0592 0.893066 11.7497 0.893066C11.4401 0.893066 11.1336 0.954033 10.8477 1.07248C10.5617 1.19094 10.3019 1.36455 10.083 1.58342L1.33301 10.3334V13.6668H4.66634L6.33301 12.0001"
-                        stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
-                      <path
-                        d="M13.0004 15.3335L15.7921 12.5968C15.9633 12.4307 16.0995 12.232 16.1926 12.0124C16.2857 11.7927 16.3339 11.5567 16.3343 11.3181C16.3347 11.0796 16.2873 10.8434 16.1948 10.6235C16.1024 10.4035 15.9669 10.2044 15.7963 10.0377C15.448 9.69712 14.9806 9.50602 14.4935 9.50509C14.0065 9.50415 13.5383 9.69346 13.1888 10.0327L13.0021 10.216L12.8163 10.0327C12.4681 9.69237 12.0008 9.50143 11.5139 9.50049C11.0271 9.49956 10.5591 9.68871 10.2096 10.0277C10.0383 10.1937 9.9021 10.3924 9.80891 10.612C9.71572 10.8316 9.66746 11.0677 9.667 11.3062C9.66653 11.5447 9.71386 11.781 9.80619 12.0009C9.89853 12.2209 10.034 12.4201 10.2046 12.5868L13.0004 15.3335Z"
-                        stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    Blog
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link<?php echo nav_active('contact.php'); ?>" href="contact">
-                    <svg class="nav-icon" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M5.66699 5.5H12.3337" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
-                      <path d="M5.66699 8.8335H10.667" stroke-width="1.4" stroke-linecap="round"
-                        stroke-linejoin="round" />
-                      <path
-                        d="M14 1.3335C14.663 1.3335 15.2989 1.59689 15.7678 2.06573C16.2366 2.53457 16.5 3.17045 16.5 3.8335V10.5002C16.5 11.1632 16.2366 11.7991 15.7678 12.2679C15.2989 12.7368 14.663 13.0002 14 13.0002H9.83333L5.66667 15.5002V13.0002H4C3.33696 13.0002 2.70107 12.7368 2.23223 12.2679C1.76339 11.7991 1.5 11.1632 1.5 10.5002V3.8335C1.5 3.17045 1.76339 2.53457 2.23223 2.06573C2.70107 1.59689 3.33696 1.3335 4 1.3335H14Z"
-                        stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    Contact
-                  </a>
-                </li>
+                <?php foreach ($main_menu as $item): ?>
+                  <?php if (in_array($user_role, $item['roles'])): ?>
+                    <li class="nav-item">
+                      <a class="nav-link<?php echo nav_active($item['url']); ?>" href="<?php echo $item['url']; ?>">
+                        <?php if ($item['icon'] == 'home'): ?>
+                          <svg class="nav-icon" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M13.475 4.92481L9.03083 1.46814C8.64082 1.16473 8.1608 1 7.66667 1C7.17254 1 6.69251 1.16473 6.3025 1.46814L1.8575 4.92481C1.59037 5.13254 1.37424 5.39858 1.22563 5.7026C1.07701 6.00662 0.99984 6.34058 1 6.67897V12.679C1 13.121 1.17559 13.5449 1.48816 13.8575C1.80072 14.17 2.22464 14.3456 2.66667 14.3456H12.6667C13.1087 14.3456 13.5326 14.17 13.8452 13.8575C14.1577 13.5449 14.3333 13.121 14.3333 12.679V6.67897C14.3333 5.99314 14.0167 5.34564 13.475 4.92481Z" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M10.9753 10.1665C9.13359 11.2773 6.14859 11.2773 4.30859 10.1665" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                          </svg>
+                        <?php elseif ($item['icon'] == 'user'): ?>
+                          <svg class="nav-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 9.8335C9.66304 9.8335 10.2989 9.5701 10.7678 9.10126C11.2366 8.63242 11.5 7.99654 11.5 7.3335C11.5 6.67045 11.2366 6.03457 10.7678 5.56573C10.2989 5.09689 9.66304 4.8335 9 4.8335C8.33696 4.8335 7.70107 5.09689 7.23223 5.56573C6.76339 6.03457 6.5 6.67045 6.5 7.3335C6.5 7.99654 6.76339 8.63242 7.23223 9.10126C7.70107 9.5701 8.33696 9.8335 9 9.8335Z" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M9 1.5C15 1.5 16.5 3 16.5 9C16.5 15 15 16.5 9 16.5C3 16.5 1.5 15 1.5 9C1.5 3 3 1.5 9 1.5Z" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M4 15.7085V15.6668C4 14.7828 4.35119 13.9349 4.97631 13.3098C5.60143 12.6847 6.44928 12.3335 7.33333 12.3335H10.6667C11.5507 12.3335 12.3986 12.6847 13.0237 13.3098C13.6488 13.9349 14 14.7828 14 15.6668V15.7085" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                          </svg>
+                        <?php elseif ($item['icon'] == 'expert'): ?>
+                          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7.99967 1.3335L1.33301 4.66683L7.99967 8.00016L14.6663 4.66683L7.99967 1.3335Z" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M1.33301 8L7.99967 11.3333L14.6663 8" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M1.33301 11.3335L7.99967 14.6668L14.6663 11.3335" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                          </svg>
+                        <?php elseif ($item['icon'] == 'skills'): ?>
+                          <svg class="nav-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 2L11.09 6.26L16 7L12.5 10.41L13.18 15.32L9 13.27L4.82 15.32L5.5 10.41L2 7L6.91 6.26L9 2Z" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                          </svg>
+                        <?php elseif ($item['icon'] == 'works'): ?>
+                          <svg class="nav-icon" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2.00326 3.99733L7.95159 1.40649C8.04974 1.36442 8.15533 1.34243 8.26212 1.34181C8.3689 1.34119 8.47473 1.36196 8.57337 1.40289C8.67201 1.44382 8.76145 1.50408 8.83642 1.58013C8.9114 1.65617 8.97039 1.74646 9.00992 1.84566L13.1133 11.764C13.1985 11.9651 13.2014 12.1917 13.1213 12.3949C13.0412 12.5982 12.8845 12.7618 12.6849 12.8507L6.73742 15.4415C6.63922 15.4837 6.53356 15.5058 6.42668 15.5065C6.3198 15.5072 6.21387 15.4864 6.11514 15.4455C6.0164 15.4046 5.92688 15.3442 5.85184 15.2681C5.7768 15.192 5.71778 15.1016 5.67826 15.0023L1.57492 5.08316C1.48963 4.88204 1.48673 4.65546 1.56684 4.45222C1.64696 4.24898 1.80367 4.08616 2.00326 3.99733Z" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                          </svg>
+                        <?php elseif ($item['icon'] == 'blog'): ?>
+                          <svg class="nav-icon" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12.1663 6.16676L13.4163 4.91676C13.6352 4.69789 13.8088 4.43805 13.9273 4.15208C14.0457 3.86612 14.1067 3.55962 14.1067 3.25009C14.1067 2.94056 14.0457 2.63406 13.9273 2.3481C13.8088 2.06213 13.6352 1.80229 13.4163 1.58342C13.1975 1.36455 12.9376 1.19094 12.6517 1.07248C12.3657 0.954033 12.0592 0.893066 11.7497 0.893066C11.4401 0.893066 11.1336 0.954033 10.8477 1.07248C10.5617 1.19094 10.3019 1.36455 10.083 1.58342L1.33301 10.3334V13.6668H4.66634L6.33301 12.0001" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                          </svg>
+                        <?php elseif ($item['icon'] == 'contact'): ?>
+                          <svg class="nav-icon" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14 1.3335C14.663 1.3335 15.2989 1.59689 15.7678 2.06573C16.2366 2.53457 16.5 3.17045 16.5 3.8335V10.5002C16.5 11.1632 16.2366 11.7991 15.7678 12.2679C15.2989 12.7368 14.663 13.0002 14 13.0002H9.83333L5.66667 15.5002V13.0002H4C3.33696 13.0002 2.70107 12.7368 2.23223 12.2679C1.76339 11.7991 1.5 11.1632 1.5 10.5002V3.8335C1.5 3.17045 1.76339 2.53457 2.23223 2.06573C2.70107 1.59689 3.33696 1.3335 4 1.3335H14Z" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                          </svg>
+                        <?php elseif ($item['icon'] == 'lock'): ?>
+                          <svg class="nav-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M5 8V6C5 3.79086 6.79086 2 9 2C11.2091 2 13 3.79086 13 6V8M5 8H13C14.1046 8 15 8.89543 15 10V14C15 15.1046 14.1046 16 13 16H5C3.89543 16 3 15.1046 3 14V10C3 8.89543 3.89543 8 5 8Z" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                          </svg>
+                        <?php endif; ?>
+                        <span><?php echo $item['title']; ?></span>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                <?php endforeach; ?>
               </ul>
               <div class="header-right-info d-flex align-items-center">
                 <button class="theme-control-btn">
@@ -232,16 +291,13 @@
                     <small class="theme-text d-block d-xl-none">Change appearance</small>
                   </span>
                 </button>
-                <a href="contact" class="lets-talk-btn">
-                  Let's Talk
-                  <svg class="icon" width="20" height="20" viewBox="0 0 20 20" fill="none"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <path d="M17.5 11.6665V6.6665H12.5" stroke="white" stroke-width="1.5" stroke-linecap="round"
-                      stroke-linejoin="round" />
-                    <path d="M17.5 6.6665L10 14.1665L2.5 6.6665" stroke="white" stroke-width="1.5" stroke-linecap="round"
-                      stroke-linejoin="round" />
-                  </svg>
-                </a>
+                <button
+                  data-cal-link="praveenkumar-kanneganti"
+                  data-cal-config='{"layout":"month_view"}'
+                  class="lets-talk-icon-btn"
+                  title="Book an Appointment">
+                  <i data-lucide="calendar"></i>
+                </button>
               </div>
             </div>
             <div class="mobile-menu-overlay d-block d-lg-none"></div>
@@ -255,4 +311,3 @@
       </nav>
     </header>
     <!-- header part end -->
-     

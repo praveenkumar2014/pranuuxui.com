@@ -136,27 +136,64 @@
                     <!-- Booking System -->
                     <div class="booking-section" id="booking-section">
                       <div class="booking-header">
-                        <h4>📅 Book a Discovery Call</h4>
-                        <p>Pick a time slot — I'll confirm within 2 hours.</p>
+                        <h4>Book a discovery call</h4>
+                        <p>Pick a slot, then confirm via Google Meet or WhatsApp — I'll respond within 2 hours (IST).</p>
                       </div>
                       <div class="booking-slots">
-                        <button class="slot-btn">Mon 10:00 AM IST</button>
-                        <button class="slot-btn">Mon 3:00 PM IST</button>
-                        <button class="slot-btn">Tue 11:00 AM IST</button>
-                        <button class="slot-btn">Wed 10:00 AM IST</button>
-                        <button class="slot-btn">Wed 4:00 PM IST</button>
-                        <button class="slot-btn">Thu 2:00 PM IST</button>
-                        <button class="slot-btn">Fri 11:00 AM IST</button>
-                        <button class="slot-btn">Fri 5:00 PM IST</button>
+                        <button type="button" class="slot-btn">Mon 10:00 AM IST</button>
+                        <button type="button" class="slot-btn">Mon 3:00 PM IST</button>
+                        <button type="button" class="slot-btn">Tue 11:00 AM IST</button>
+                        <button type="button" class="slot-btn">Wed 10:00 AM IST</button>
+                        <button type="button" class="slot-btn">Wed 4:00 PM IST</button>
+                        <button type="button" class="slot-btn">Thu 2:00 PM IST</button>
+                        <button type="button" class="slot-btn">Fri 11:00 AM IST</button>
+                        <button type="button" class="slot-btn">Fri 5:00 PM IST</button>
                       </div>
-                      <button class="slot-confirm-btn">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"></path></svg>
-                        Confirm Booking
-                      </button>
+                      <div class="d-flex flex-wrap gap-3 mt-3">
+                        <button type="button" class="slot-confirm-btn btn btn-primary" id="confirm-google-meet">
+                          Confirm via Google Meet
+                        </button>
+                        <button type="button" class="slot-confirm-btn btn btn-outline-secondary" id="confirm-whatsapp">
+                          Confirm via WhatsApp
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" data-cal-link="praveenkumar-kanneganti" data-cal-config='{"layout":"month_view"}'>
+                          Or use calendar picker
+                        </button>
+                      </div>
                     </div>
+
+                    <script>
+                    (function () {
+                      var meetBase = <?php echo json_encode(google_meet_link()); ?>;
+                      var selectedSlotText = '';
+                      document.querySelectorAll('.slot-btn').forEach(function (btn) {
+                        btn.addEventListener('click', function () {
+                          document.querySelectorAll('.slot-btn').forEach(function (b) { b.classList.remove('active'); });
+                          btn.classList.add('active');
+                          selectedSlotText = btn.textContent.trim();
+                        });
+                      });
+                      function requireSlot() {
+                        if (!selectedSlotText) { alert('Please select a time slot first.'); return false; }
+                        return true;
+                      }
+                      document.getElementById('confirm-google-meet').addEventListener('click', function () {
+                        if (!requireSlot()) return;
+                        var subject = encodeURIComponent('Discovery call — ' + selectedSlotText);
+                        var body = encodeURIComponent('Hi Praveen,\n\nI would like to book: ' + selectedSlotText + '\n\nThanks!');
+                        window.open(meetBase + '?hs=122', '_blank');
+                        window.location.href = 'mailto:praveenkumar.kanneganti@gmail.com?subject=' + subject + '&body=' + body;
+                      });
+                      document.getElementById('confirm-whatsapp').addEventListener('click', function () {
+                        if (!requireSlot()) return;
+                        var msg = encodeURIComponent('Hi Praveen, I would like to book a discovery call for: ' + selectedSlotText + '. Please confirm availability.');
+                        window.open('https://wa.me/918884263999?text=' + msg, '_blank');
+                      });
+                    })();
+                    </script>
                     <!-- <div class="contact-map-area">
                       <iframe
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d193595.25280012016!2d-74.14448732737499!3d40.69763123331177!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c24fa5d33f083b%3A0xc80b8f06e177fe62!2sNew%20York%2C%20NY%2C%20USA!5e0!3m2!1sen!2sbd!4v1711832776336!5m2!1sen!2sbd"
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3806.012345678901!2d78.4867!3d17.385!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bcb99dae026bffd%3A0xae0536f037ca1d0!2sHyderabad%2C%20Telangana%2C%20India!5e0!3m2!1sen!2sin!4v1711832776336!5m2!1sen!2sin"
                         allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
                     </div>
                      -->

@@ -1,4 +1,15 @@
-<?php include 'includes/config.php'; ?>
+<?php include 'includes/config.php';
+$db->exec("CREATE TABLE IF NOT EXISTS services (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    icon TEXT,
+    description TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)");
+$projectCount = (int) $db->querySingle('SELECT COUNT(*) FROM projects');
+$blogCount = (int) $db->querySingle('SELECT COUNT(*) FROM blogs');
+$serviceCount = (int) $db->querySingle('SELECT COUNT(*) FROM services');
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -56,19 +67,19 @@
             <div class="col-md-4">
                 <div class="stat-card">
                     <div class="text-secondary small mb-1">Total Projects</div>
-                    <div class="h2 mb-0">12</div>
+                    <div class="h2 mb-0"><?php echo $projectCount; ?></div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="stat-card">
                     <div class="text-secondary small mb-1">Blog Posts</div>
-                    <div class="h2 mb-0">8</div>
+                    <div class="h2 mb-0"><?php echo $blogCount; ?></div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="stat-card">
                     <div class="text-secondary small mb-1">Service Modules</div>
-                    <div class="h2 mb-0">6</div>
+                    <div class="h2 mb-0"><?php echo max($serviceCount, 6); ?></div>
                 </div>
             </div>
         </div>

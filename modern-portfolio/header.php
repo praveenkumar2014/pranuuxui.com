@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/includes/config.php';
+
 // ── PHP Active Navigation Detection ──────────────────────
 $current_page = basename($_SERVER['PHP_SELF'] ?? '');
 $current_path = trim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/', '/');
@@ -38,9 +40,16 @@ $page_titles = [
   'index.php' => 'Praveen Kumar K — Senior UX/UI Architect · AI Agentic Design Expert',
   'portfolio.php' => 'Projects — Praveen Kumar K | AI UX Architecture',
   'services.php' => 'Services — UX Strategy & Generative AI Design',
+  'skills.php' => 'Skills — UX, AI & LLM Design Stack',
+  'blog.php' => 'Blog — UX Research, AI Agents & Product Design',
   'contact.php' => 'Contact — Let\'s Build the Future of AI UX',
+  'careers.php' => 'Careers — AI-Assisted Job Search & Senior UX Roles',
+  'about.php' => 'About — Praveen Kumar K | 18+ Years UX Leadership',
 ];
 $current_title = $page_titles[$current_page] ?? 'Praveen Kumar K — Senior UX/UI Architect';
+$canonical_path = $current_path === '' ? '' : $current_path;
+$canonical_url = site_base_url() . ($canonical_path ? '/' . $canonical_path : '/');
+$ga_id = ga_measurement_id();
 
 // ── Dynamic Menu Items ──────────────────────────────────
 $main_menu = [
@@ -50,6 +59,7 @@ $main_menu = [
   ['title' => 'Skills', 'url' => 'skills', 'icon' => 'skills', 'roles' => ['guest', 'admin', 'super_admin']],
   ['title' => 'Works', 'url' => 'portfolio', 'icon' => 'works', 'roles' => ['guest', 'admin', 'super_admin']],
   ['title' => 'Blog', 'url' => 'blog', 'icon' => 'blog', 'roles' => ['guest', 'admin', 'super_admin']],
+  ['title' => 'Careers', 'url' => 'careers', 'icon' => 'expert', 'roles' => ['guest', 'admin', 'super_admin']],
   ['title' => 'Contact', 'url' => 'contact', 'icon' => 'contact', 'roles' => ['guest', 'admin', 'super_admin']],
   ['title' => 'Admin', 'url' => 'admin', 'icon' => 'lock', 'roles' => ['admin', 'super_admin']],
   ['title' => 'Login', 'url' => 'login', 'icon' => 'lock', 'roles' => ['guest']],
@@ -69,14 +79,26 @@ $main_menu = [
   <meta property="og:title" content="Praveen Kumar K — Senior UX/UI Architect · AI Agentic Design Expert">
   <meta property="og:description" content="18+ years of UX/UI Architecture, AI Agentic Design, Generative AI UX Strategy across 14+ countries worldwide.">
   <meta property="og:image" content="/assets/img/images/profile.png">
-  <meta property="og:url" content="https://www.pranuuxui.com/">
+  <meta property="og:url" content="<?php echo htmlspecialchars($canonical_url, ENT_QUOTES); ?>">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="author" content="Praveen Kumar K">
+  <meta name="keywords" content="UX Designer, UI Architect, AI UX, Generative AI, LLM Product Design, Design Systems, WCAG, Figma, Portfolio">
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Praveen Kumar K — Senior UX/UI Architect">
   <meta name="twitter:description" content="18+ years of UX/UI, AI Agentic Design &amp; Generative AI UX Strategy across 14+ countries.">
   <meta name="twitter:image" content="/assets/img/images/profile.png">
   <!-- Canonical -->
-  <link rel="canonical" href="https://www.pranuuxui.com/">
+  <link rel="canonical" href="<?php echo htmlspecialchars($canonical_url, ENT_QUOTES); ?>">
+  <?php if ($ga_id && $ga_id !== 'G-XXXXXXXXXX'): ?>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo htmlspecialchars($ga_id, ENT_QUOTES); ?>"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', '<?php echo htmlspecialchars($ga_id, ENT_QUOTES); ?>', { anonymize_ip: true });
+  </script>
+  <?php endif; ?>
   <link rel="shortcut icon" type="image/x-icon" href="/assets/img/favicon.svg">
   <!-- Place favicon.ico in the root directory -->
 
